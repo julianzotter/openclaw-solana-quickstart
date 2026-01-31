@@ -54,6 +54,14 @@ WORKSPACE_DIR="$HOME/.openclaw/workspace"
 echo "📁 Setting up workspace at ${WORKSPACE_DIR}..."
 mkdir -p "$WORKSPACE_DIR"
 
+# Install dependencies first (needed for wallet generation and address extraction)
+echo "📦 Installing Solana dependencies..."
+if [ ! -d "node_modules/@solana/web3.js" ]; then
+    npm install --silent @solana/web3.js @solana/spl-token 2>/dev/null
+fi
+echo -e "${GREEN}✅ Dependencies installed${NC}"
+echo
+
 # Generate Solana keypair
 echo "🔑 Generating Solana wallet keypair..."
 WALLET_FILE="$WORKSPACE_DIR/solana-wallet.json"
@@ -62,36 +70,14 @@ if [ -f "$WALLET_FILE" ]; then
     echo -e "${YELLOW}⚠️  Wallet already exists at ${WALLET_FILE}${NC}"
     echo "Using existing wallet..."
 else
-    # Create a simple Node.js script to generate the keypair
-    cat > /tmp/generate-keypair.js << 'EOF'
+    node -e "
 const { Keypair } = require('@solana/web3.js');
 const fs = require('fs');
-
-// Generate new keypair
 const keypair = Keypair.generate();
-
-// Create the wallet file format
-const walletData = Array.from(keypair.secretKey);
-
-// Write to file
-const walletPath = process.argv[2];
-fs.writeFileSync(walletPath, JSON.stringify(walletData, null, 2));
-
-console.log('Keypair generated and saved to:', walletPath);
-console.log('Public key (wallet address):', keypair.publicKey.toString());
-EOF
-
-    # Install @solana/web3.js if not available in current directory
-    if [ ! -d "node_modules/@solana/web3.js" ]; then
-        echo "Installing @solana/web3.js..."
-        npm install @solana/web3.js
-    fi
-
-    # Generate the keypair
-    node /tmp/generate-keypair.js "$WALLET_FILE"
-    
-    # Clean up temp file
-    rm /tmp/generate-keypair.js
+fs.writeFileSync('$WALLET_FILE', JSON.stringify(Array.from(keypair.secretKey), null, 2));
+console.log('Keypair generated and saved.');
+console.log('Public key:', keypair.publicKey.toString());
+"
 fi
 
 # Extract and display the public key
