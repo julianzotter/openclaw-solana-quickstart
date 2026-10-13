@@ -1,6 +1,7 @@
 """Replay von Q-ALG-1: Routing (R2) -> Bewertungen (R4) -> Aggregation (R5) -> Ledger (R8)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -40,7 +41,10 @@ def main(rnd: int = 1) -> None:
     roles = select_assessors(q)
     led.append("ROUTE", {"q": q.qid, "roles": roles}, "patch")
     load(q, roles, rnd)
-    led.append("ASSESS", {"q": q.qid, "round": rnd, "n": len(q.assessments)}, "patch")
+    digests = {r: hashlib.sha256((HERE / f"Q-ALG-1.{r}.json").read_bytes()).hexdigest()[:16]
+               for r in roles}  # Inhalt der Bewertungen fließt in die Hash-Kette ein
+    led.append("ASSESS", {"q": q.qid, "round": rnd, "n": len(q.assessments),
+                          "sha256": digests}, "patch")
     status, decision = aggregate(q)
     led.append("AGGREGATE", {"q": q.qid, "status": status, "decision": decision},
                "minor" if status == "DECIDED" else "patch")
