@@ -16,8 +16,10 @@ ROLES: dict[str, set[str]] = {  # Rollenkatalog: Rolle -> Kompetenz-Tags
     "FIN": {"risk", "cost", "capital"},
     "ARC": {"infra", "integration", "keys"},
     "LEG": {"compliance", "risk"},
+    "QNT": {"signal", "backtest", "statistics"},
+    "RSK": {"risk", "drawdown", "capital"},
 }
-ADVERSARIAL = {"SEC", "LEG"}  # mind. 1 Rolle mit Prüf-/Gegenposition
+ADVERSARIAL = {"SEC", "LEG", "RSK"}  # mind. 1 Rolle mit Prüf-/Gegenposition
 
 
 @dataclass(frozen=True)
